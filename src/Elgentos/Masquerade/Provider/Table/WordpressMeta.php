@@ -12,7 +12,7 @@ namespace Elgentos\Masquerade\Provider\Table;
  * group1:
  *   wp_posts:
  *     provider:
- *       class: \Elgentos\Masquerade\Provider\Table\Wordpress
+ *       class: \Elgentos\Masquerade\Provider\Table\WordpressMeta
  *       id_field: post_id
  *     columns:
  *       _wp_page_template:
