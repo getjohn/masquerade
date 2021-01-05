@@ -1,6 +1,7 @@
 {
   "name": "elgentos/masquerade",
   "description": "Framework-agnostic database seeder with fake data",
+  "version": "0.1.9.1",
   "require": {
     "php": "^7.1.3",
     "doctrine/dbal": "~2.3",
