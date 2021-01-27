@@ -12,7 +12,7 @@ namespace Elgentos\Masquerade\Provider\Table;
  * group1:
  *   wp_posts:
  *     provider:
- *       class: \Elgentos\Masquerade\Provider\Table\Wordpress
+ *       class: \Elgentos\Masquerade\Provider\Table\WordpressMeta
  *       id_field: post_id
  *     columns:
  *       _wp_page_template:
@@ -60,18 +60,18 @@ class WordpressMeta extends Simple
     public function update($primaryKey, array $updates)
     {
 
-        // first update the static properties:
+        // first update the columns in the main table
         $staticUpdates = array_filter($updates, function ($value, $code) {
             return $this->_isInBaseTable($code);
         }, ARRAY_FILTER_USE_BOTH);
 
-        // only update static values if there are any:
+        // only update main table values if there are any:
         if (count($staticUpdates)) {
             $this->db->table($this->table['name'])->where($this->table['pk'], $primaryKey)->update($staticUpdates);
         }
 
         // now individually update meta values
-        foreach ($updates as $code => $value) {
+        foreach ($updates as $key => $value) {
             if ($this->_isInBaseTable($code)) {
                 continue;
             }
@@ -84,9 +84,9 @@ class WordpressMeta extends Simple
         }
     }
 
-    protected function _isInBaseTable($attributeCode)
+    protected function _isInBaseTable($columnName)
     {
-        return !isset($this->attributes[$attributeCode]) || $this->attributes[$attributeCode]->backend_type === 'static';
+        return !isset($this->keys[$columnName]);
     }
 
     /**
@@ -98,18 +98,18 @@ class WordpressMeta extends Simple
 
         $selects = ["{$this->table['name']}.*"];
 
-        // add any required attributes to the query using joins...
+        // add any required meta values to the query using joins...
         $joinCount = 0;
         foreach ($this->columns() as $columnName => $column) {
             if ($this->_isInBaseTable($columnName)) {
                 continue;
             }
-            $joinTable = 'j' . $joinCount;
-            $query->leftJoin("{$this->metaTable} as {$joinTable}", function ($join) use ($joinTable, $attr) {
-                $join->on("{$this->table['name']}.{$this->table['pk']}", '=', "{$joinTable}.{$this->metaTableID}")
-                    ->where("{$joinTable}.meta_key", '=', $columnName);
+            $joinAlias = 'j' . $joinCount;
+            $query->leftJoin("{$this->metaTable} as {$joinAlias}", function ($join) use ($joinAlias, $columnName) {
+                $join->on("{$this->table['name']}.{$this->table['pk']}", '=', "{$joinAlias}.{$this->metaTableID}")
+                    ->where("{$joinAlias}.meta_key", '=', $columnName);
             });
-            $selects[] = "{$joinTable}.meta_value as `{$columnName}`";
+            $selects[] = "{$joinAlias}.meta_value as `{$columnName}`";
         }
 
         $query->select(...$selects);
